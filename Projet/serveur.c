@@ -26,7 +26,7 @@ int testQuitter(char tampon[]) {
     return strcmp(tampon, EXIT) == 0;
 }
 
-char *constructionTableau() {
+char *generateArray() {
     char *tableau = (char *) malloc(COLUMNS * sizeof(char ));
     if (tableau == NULL) {
         printf("Allocation echouée\n");
@@ -37,13 +37,13 @@ char *constructionTableau() {
     return tableau;
 }
 
-char **constructionMatrice() {
+char **generateMatrix() {
     char **matrice = (char **) malloc(ROWS * sizeof(char *));
     if (matrice == NULL) {
         printf("L'allocation a échouée!\n");
     }
     for (int i = 0; i < ROWS; i++) {
-        matrice[i] = constructionTableau();
+        matrice[i] = generateArray();
     }
     return matrice;
 }
@@ -53,8 +53,6 @@ void generateBlankGrid(char** grid) {
         for (int j = 0; j < COLUMNS; j++){
             if (i == 0 || j == 0 || i == ROWS-1 || j == COLUMNS-1){
                 grid[i][j] = '#';
-            } else {
-                grid[i][j] = ' ';
             }
         }
     }
@@ -86,7 +84,7 @@ int main(int argc, char const *argv[]) {
     struct sockaddr_in coordonneesServeur;
     struct sockaddr_in coordonneesAppelant;
     char tampon[MAX_BUFFER];
-    char** grid = constructionMatrice();
+    char** grid = generateMatrix();
     int nbRecu;
     int longueurAdresse;
     int pid;
