@@ -56,4 +56,4 @@ add_executable(systeme_AS_2021_master
         TD5/exo4/client.c
         TD5/exo4/serveur.c
         TD5/exo5/client.c
-        TD5/exo5/serveur.c)
+        TD5/exo5/serveur.c Projet/serveur.c Projet/client.c)
