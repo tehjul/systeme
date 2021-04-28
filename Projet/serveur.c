@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <time.h>
 
 #define PORT 6000
 #define MAX_BUFFER 1000
@@ -59,11 +60,20 @@ void generateBlankGrid(char** grid) {
 }
 
 void showGrid(char** grid){
-    for (int i = 0; i < strlen(grid[i]); i++){
+    for (int i = 0; i < ROWS; i++){
         for (int j = 0; j < strlen(grid[i]); j++){
             printf("%c",grid[i][j]);
         }
         printf("\n");
+    }
+}
+void convertMatrixToArray(char** matrix, char* tableau){
+    int curs = 0;
+    for (int i = 0; i < ROWS; i++){
+        for (int j = 0; j < COLUMNS; j++){
+            tableau[curs] =  matrix[i][j];
+            curs++;
+        }
     }
 }
 
@@ -78,6 +88,15 @@ void addGhosts(char** grid){
     }
 }
 
+void addTheGreatestPacman(char** grid){
+    int x, y;
+        do {
+            x = 1 + rand() % ROWS;
+            y = 1 + rand() % COLUMNS;
+        } while (grid[x][y] != ' ');
+        grid[x][y] = '<';
+    }
+
 int main(int argc, char const *argv[]) {
     int fdSocketAttente;
     int fdSocketCommunication;
@@ -88,11 +107,7 @@ int main(int argc, char const *argv[]) {
     int nbRecu;
     int longueurAdresse;
     int pid;
-
-    printf("avant le generate\n");
-    generateBlankGrid(grid);
-    printf("apres le generate\n");
-    showGrid(grid);
+    srand(time(NULL)); //initialise le générateur aléatoire
 
     fdSocketAttente = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -138,10 +153,13 @@ int main(int argc, char const *argv[]) {
 
         if ((pid = fork()) == 0) {
             close(fdSocketAttente);
-
+            generateBlankGrid(grid);
+            addGhosts(grid);
+            addTheGreatestPacman(grid);
             while (1) {
-                generateBlankGrid((char **) grid);
-                send(fdSocketCommunication, grid, strlen(tampon), 0);
+
+                convertMatrixToArray(grid, tampon);
+                send(fdSocketCommunication, tampon, strlen(tampon), 0);
                 // on attend le messag&e du client
                 // la fonction recv est bloquante
                 nbRecu = recv(fdSocketCommunication, tampon, MAX_BUFFER, 0);
@@ -157,7 +175,6 @@ int main(int argc, char const *argv[]) {
                         break; // on quitte la boucle
                     }
                 }
-
                 lireMessage(tampon);
 
                 if (testQuitter(tampon)) {

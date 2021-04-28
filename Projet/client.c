@@ -8,6 +8,9 @@
 
 #define PORT 6000
 #define MAX_BUFFER 1000
+#define ROWS 12
+#define COLUMNS 20
+#define GHOSTS 2
 
 const char *EXIT = "exit";
 
@@ -21,12 +24,12 @@ int testQuitter(char tampon[]) {
     return strcmp(tampon, EXIT) == 0;
 }
 
-void showGrid(char grid[]){
-    for (int i = 0; i < strlen(&grid[i]); i++){
-        for (int j = 0; j < strlen(&grid[i]); j++){
-            printf("%c",&grid[i][j]);
+void showGridArray(char grid[]){
+    for (int i = 0; i < strlen(grid); i++){
+        if (i%COLUMNS == 0) {
+            printf("\n");
         }
-        printf("\n");
+        printf("%c", grid[i]);
     }
 }
 
@@ -34,6 +37,7 @@ void showGrid(char grid[]){
 int main(int argc , char const *argv[]) {
     int fdSocket;
     int nbRecu;
+    char** grid;
     struct sockaddr_in coordonneesServeur;
     int longueurAdresse;
     char tampon[MAX_BUFFER];
@@ -64,7 +68,11 @@ int main(int argc , char const *argv[]) {
     printf("Welcome to the fuckin' Pacman !\n");
 
     while (1) {
-        /*lireMessage(tampon);
+        printf("on attend la fuckin grille");
+        nbRecu = recv(fdSocket, tampon, MAX_BUFFER, 0);
+        showGridArray(tampon);
+
+        lireMessage(tampon);
 
         if (testQuitter(tampon)) {
             send(fdSocket, tampon, strlen(tampon), 0);
@@ -74,9 +82,8 @@ int main(int argc , char const *argv[]) {
         // on envoie le message au serveur
         send(fdSocket, tampon, strlen(tampon), 0);
 
-        // on attend la réponse du serveur*/
+        // on attend la réponse du serveur
         nbRecu = recv(fdSocket, tampon, MAX_BUFFER, 0);
-        showGrid(tampon);
 
         if (nbRecu > 0) {
             tampon[nbRecu] = 0;
