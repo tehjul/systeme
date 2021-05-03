@@ -142,11 +142,11 @@ void movePacman(char** grid, char move[]){
     int y = getPacmanYPosition(grid);
     grid[x][y]= ' ';
 
-    switch (*move) {
-        case 'z': y -= 1;
-        case 'q': x -= 1;
-        case 's': y += 1;
-        case 'd': x += 1;
+    switch (move[0]) {
+        case 122: y -= 1;
+        case 113: x -= 1;
+        case 115: y += 1;
+        case 100: x += 1;
     }
 
     if (grid[x][y] != '@') {
@@ -210,7 +210,6 @@ int main(int argc, char const *argv[]) {
     socklen_t tailleCoord = sizeof(coordonneesAppelant);
 
     int nbClients = 0;
-
     while (nbClients < MAX_CLIENTS) {
         if ((fdSocketCommunication = accept(fdSocketAttente, (struct sockaddr *) &coordonneesAppelant,
                                             &tailleCoord)) == -1) {
@@ -221,20 +220,26 @@ int main(int argc, char const *argv[]) {
         printf("Client connecté - %s:%d\n",
                inet_ntoa(coordonneesAppelant.sin_addr),
                ntohs(coordonneesAppelant.sin_port));
-        printf("avant pid \n");
 
         if ((pid = fork()) == 0) {
+            printf("dans le fork\n");
             close(fdSocketAttente);
-            initGame(grid);
+            generateBlankGrid(grid);
+            addGhosts(grid);
+            addTheGreatestPacman(grid);
+            //addDots(grid);
             printf("grille initialisee\n");
 
             while (1) {
-
                 convertMatrixToArray(grid, tampon);
+                printf("grille convertie\n");
                 send(fdSocketCommunication, tampon, strlen(tampon), 0);
+                printf("grille envoyee\n");
                 // on attend le messag&e du client
                 // la fonction recv est bloquante
+                printf("on attend la reponse\n");
                 nbRecu = recv(fdSocketCommunication, tampon, MAX_BUFFER, 0);
+                printf("nbrecu = %d\n", nbRecu);
 
                 if (nbRecu > 0) {
                     tampon[nbRecu] = 0;
@@ -244,20 +249,27 @@ int main(int argc, char const *argv[]) {
                            tampon);
 
                     if (testQuitter(tampon)) {
+                        printf("on est dans le if testquitter du nbrecu\n");
                         break; // on quitte la boucle
                     }
                 }
 
                 if (testQuitter(tampon)) {
+                    printf("on est dans le if testquitter seul\n");
                     send(fdSocketCommunication, tampon, strlen(tampon), 0);
                     break; // on quitte la boucle
                 }
-
+                printf("la pos du pacman est x = %d et y = %d\n", getPacmanXPosition(grid), getPacmanYPosition(grid));
+                printf("on bouge le pac\n");
                 movePacman(grid, tampon);
+                printf("pacman bouge\n");
+                printf("la pos du pacman est x = %d et y = %d\n", getPacmanXPosition(grid), getPacmanYPosition(grid));
+
                 if (gameOver(grid)) {
+                    printf("dans le if du gameover\n");
                     break;
                 }
-
+                printf("fin de la boucle\n");
             }
 
             exit(EXIT_SUCCESS);

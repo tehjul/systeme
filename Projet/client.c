@@ -15,7 +15,7 @@
 const char *EXIT = "exit";
 
 void nextMove(char *tampon) {
-    printf("Saisir le prochain déplacement (ZQSD ou exit pour quitter) :\n");
+    printf("\nSaisir le prochain déplacement (ZQSD ou exit pour quitter) :\n");
     fgets(tampon, MAX_BUFFER, stdin);
     strtok(tampon, "\n");
 }
@@ -37,7 +37,6 @@ void showGridArray(char grid[]){
 int main(int argc , char const *argv[]) {
     int fdSocket;
     int nbRecu;
-    char** grid;
     struct sockaddr_in coordonneesServeur;
     int longueurAdresse;
     char tampon[MAX_BUFFER];
