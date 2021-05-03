@@ -14,8 +14,8 @@
 
 const char *EXIT = "exit";
 
-void lireMessage(char tampon[]) {
-    printf("Saisir un message à envoyer :\n");
+void nextMove(char *tampon) {
+    printf("Saisir le prochain déplacement (ZQSD ou exit pour quitter) :\n");
     fgets(tampon, MAX_BUFFER, stdin);
     strtok(tampon, "\n");
 }
@@ -65,14 +65,12 @@ int main(int argc , char const *argv[]) {
     }
 
     printf("Successfully connected !\n");
-    printf("Welcome to the fuckin' Pacman !\n");
+    printf("Welcome to the Pacman !\n");
 
     while (1) {
-        printf("on attend la fuckin grille");
         nbRecu = recv(fdSocket, tampon, MAX_BUFFER, 0);
         showGridArray(tampon);
-
-        lireMessage(tampon);
+        nextMove(tampon);
 
         if (testQuitter(tampon)) {
             send(fdSocket, tampon, strlen(tampon), 0);
@@ -81,18 +79,6 @@ int main(int argc , char const *argv[]) {
 
         // on envoie le message au serveur
         send(fdSocket, tampon, strlen(tampon), 0);
-
-        // on attend la réponse du serveur
-        nbRecu = recv(fdSocket, tampon, MAX_BUFFER, 0);
-
-        if (nbRecu > 0) {
-            tampon[nbRecu] = 0;
-            printf("Recu : %s\n", tampon);
-
-            if (testQuitter(tampon)) {
-                break; // on quitte la boucle
-            }
-        }
     }
 
     close(fdSocket);

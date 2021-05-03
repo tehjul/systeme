@@ -10,14 +10,22 @@
 
 #define PORT 6000
 #define MAX_BUFFER 1000
-#define MAX_CLIENTS 3
+#define MAX_CLIENTS 30
 #define ROWS 12
 #define COLUMNS 20
 #define GHOSTS 2
+#define STARS 20
+
+typedef struct{
+    int rows;
+    int columns;
+    int ghosts;
+    int stars;
+} Pacman;
 
 const char *EXIT = "exit";
 
-void lireMessage(char tampon[]) {
+void lireMessage(char *tampon) {
     printf("Saisir un message à envoyer :\n");
     fgets(tampon, MAX_BUFFER, stdin);
     strtok(tampon, "\n");
@@ -59,14 +67,6 @@ void generateBlankGrid(char** grid) {
     }
 }
 
-void showGrid(char** grid){
-    for (int i = 0; i < ROWS; i++){
-        for (int j = 0; j < strlen(grid[i]); j++){
-            printf("%c",grid[i][j]);
-        }
-        printf("\n");
-    }
-}
 void convertMatrixToArray(char** matrix, char* tableau){
     int curs = 0;
     for (int i = 0; i < ROWS; i++){
@@ -96,6 +96,77 @@ void addTheGreatestPacman(char** grid){
         } while (grid[x][y] != ' ');
         grid[x][y] = '<';
     }
+
+void addDots(char** grid){
+    int x, y;
+    for (int i = 0; i < STARS; i++) {
+    do {
+        x = 1 + rand() % ROWS;
+        y = 1 + rand() % COLUMNS;
+    } while (grid[x][y] != ' ');
+    grid[x][y] = '*';
+    }
+}
+
+void initGame(char** grid){
+    generateBlankGrid(grid);
+    addGhosts(grid);
+    addTheGreatestPacman(grid);
+    addDots(grid);
+}
+
+int getPacmanXPosition(char** grid){
+    for (int i = 0; i < COLUMNS; i++){
+        for (int j = 0; j < ROWS; j++){
+            if (grid[i][j] == '<'){
+                return i;
+            }
+        }
+    }
+    return 0;
+}
+
+int getPacmanYPosition(char** grid){
+    for (int i = 0; i < COLUMNS; i++){
+        for (int j = 0; j < ROWS; j++){
+            if (grid[i][j] == '<'){
+                return j;
+            }
+        }
+    }
+    return 0;
+}
+
+void movePacman(char** grid, char move[]){
+    int x = getPacmanXPosition(grid);
+    int y = getPacmanYPosition(grid);
+    grid[x][y]= ' ';
+
+    switch (*move) {
+        case 'z': y -= 1;
+        case 'q': x -= 1;
+        case 's': y += 1;
+        case 'd': x += 1;
+    }
+
+    if (grid[x][y] != '@') {
+        grid[x][y] = '<';
+    } else {
+        grid[x][y] = 'X';
+    }
+
+}
+
+int gameOver(char** grid){
+    int x = getPacmanXPosition(grid);
+    int y = getPacmanYPosition(grid);
+
+    if (x == 0 && y == 0){
+        return 1;
+    }
+
+    return 0;
+}
 
 int main(int argc, char const *argv[]) {
     int fdSocketAttente;
@@ -150,12 +221,13 @@ int main(int argc, char const *argv[]) {
         printf("Client connecté - %s:%d\n",
                inet_ntoa(coordonneesAppelant.sin_addr),
                ntohs(coordonneesAppelant.sin_port));
+        printf("avant pid \n");
 
         if ((pid = fork()) == 0) {
             close(fdSocketAttente);
-            generateBlankGrid(grid);
-            addGhosts(grid);
-            addTheGreatestPacman(grid);
+            initGame(grid);
+            printf("grille initialisee\n");
+
             while (1) {
 
                 convertMatrixToArray(grid, tampon);
@@ -175,20 +247,22 @@ int main(int argc, char const *argv[]) {
                         break; // on quitte la boucle
                     }
                 }
-                lireMessage(tampon);
 
                 if (testQuitter(tampon)) {
                     send(fdSocketCommunication, tampon, strlen(tampon), 0);
                     break; // on quitte la boucle
                 }
 
-                // on envoie le message au client
-                send(fdSocketCommunication, tampon, strlen(tampon), 0);
+                movePacman(grid, tampon);
+                if (gameOver(grid)) {
+                    break;
+                }
+
             }
 
             exit(EXIT_SUCCESS);
         }
-
+        printf("après le pid\n");
         nbClients++;
     }
 
