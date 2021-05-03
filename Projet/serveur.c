@@ -14,7 +14,7 @@
 #define ROWS 12
 #define COLUMNS 20
 #define GHOSTS 2
-#define STARS 20
+#define STARS 2
 
 typedef struct{
     int rows;
@@ -37,6 +37,7 @@ int testQuitter(char tampon[]) {
 
 char *generateArray() {
     char *tableau = (char *) malloc(COLUMNS * sizeof(char ));
+    int i = 0;
     if (tableau == NULL) {
         printf("Allocation echouée\n");
     }
@@ -81,30 +82,30 @@ void addGhosts(char** grid){
     int x, y;
     for (int i = 0; i < GHOSTS; i++) {
         do {
-            x = 1 + rand() % ROWS;
-            y = 1 + rand() % COLUMNS;
-        } while (grid[x][y] != ' ');
-        grid[x][y] = '@';
+            x = 1 + rand() % COLUMNS;
+            y = 1 + rand() % ROWS;
+        } while (grid[y][x] != ' ');
+        grid[y][x] = '@';
     }
 }
 
 void addTheGreatestPacman(char** grid){
     int x, y;
         do {
-            x = 1 + rand() % ROWS;
-            y = 1 + rand() % COLUMNS;
-        } while (grid[x][y] != ' ');
-        grid[x][y] = '<';
+            x = 1 + rand() % COLUMNS;
+            y = 1 + rand() % ROWS;
+        } while (grid[y][x] != ' ');
+        grid[y][x] = '<';
     }
 
 void addDots(char** grid){
     int x, y;
     for (int i = 0; i < STARS; i++) {
     do {
-        x = 1 + rand() % ROWS;
-        y = 1 + rand() % COLUMNS;
-    } while (grid[x][y] != ' ');
-    grid[x][y] = '*';
+        x = 1 + rand() % COLUMNS;
+        y = 1 + rand() % ROWS;
+    } while (grid[y][x] != ' ');
+    grid[y][x] = '*';
     }
 }
 
@@ -112,14 +113,14 @@ void initGame(char** grid){
     generateBlankGrid(grid);
     addGhosts(grid);
     addTheGreatestPacman(grid);
-    addDots(grid);
+    //addDots(grid);
 }
 
 int getPacmanXPosition(char** grid){
-    for (int i = 0; i < COLUMNS; i++){
-        for (int j = 0; j < ROWS; j++){
+    for (int i = 1; i < ROWS; i++){
+        for (int j = 1; j < COLUMNS; j++){
             if (grid[i][j] == '<'){
-                return i;
+                return j;
             }
         }
     }
@@ -127,10 +128,10 @@ int getPacmanXPosition(char** grid){
 }
 
 int getPacmanYPosition(char** grid){
-    for (int i = 0; i < COLUMNS; i++){
-        for (int j = 0; j < ROWS; j++){
+    for (int i = 0; i < ROWS; i++){
+        for (int j = 0; j < COLUMNS; j++){
             if (grid[i][j] == '<'){
-                return j;
+                return i;
             }
         }
     }
@@ -140,21 +141,17 @@ int getPacmanYPosition(char** grid){
 void movePacman(char** grid, char move[]){
     int x = getPacmanXPosition(grid);
     int y = getPacmanYPosition(grid);
-    grid[x][y]= ' ';
-
-    switch (move[0]) {
-        case 122: y -= 1;
-        case 113: x -= 1;
-        case 115: y += 1;
-        case 100: x += 1;
+    grid[y][x] = ' ';
+    if (move[0] == 'z') {
+        y -= 1;
+    } else if (move[0] == 'q'){
+        x -= 1;
+    } else if (move[0] == 's'){
+        y += 1;
+    } else if (move[0] == 'd'){
+        x += 1;
     }
-
-    if (grid[x][y] != '@') {
-        grid[x][y] = '<';
-    } else {
-        grid[x][y] = 'X';
-    }
-
+    grid[y][x] = '<';
 }
 
 int gameOver(char** grid){
@@ -227,7 +224,7 @@ int main(int argc, char const *argv[]) {
             generateBlankGrid(grid);
             addGhosts(grid);
             addTheGreatestPacman(grid);
-            //addDots(grid);
+            addDots(grid);
             printf("grille initialisee\n");
 
             while (1) {
@@ -249,11 +246,14 @@ int main(int argc, char const *argv[]) {
                            tampon);
 
                     if (testQuitter(tampon)) {
-                        printf("on est dans le if testquitter du nbrecu\n");
+                        printf("Client déconnecté - %s:%d\n",
+                               inet_ntoa(coordonneesAppelant.sin_addr),
+                               ntohs(coordonneesAppelant.sin_port));
                         break; // on quitte la boucle
                     }
+                    printf("fin de la boucle nbrecu\n");
                 }
-
+                printf("avant le if testquitter\n");
                 if (testQuitter(tampon)) {
                     printf("on est dans le if testquitter seul\n");
                     send(fdSocketCommunication, tampon, strlen(tampon), 0);
