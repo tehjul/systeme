@@ -24,7 +24,7 @@ int testQuitter(char tampon[]) {
     return strcmp(tampon, EXIT) == 0;
 }
 
-void showGridArray(char grid[]){
+void showGridArray(char* grid){
     for (int i = 0; i < strlen(grid); i++){
         if (i%COLUMNS == 0) {
             printf("\n");
@@ -68,14 +68,13 @@ int main(int argc , char const *argv[]) {
 
     while (1) {
         nbRecu = recv(fdSocket, tampon, MAX_BUFFER, 0);
-        showGridArray(tampon);
-        nextMove(tampon);
-
         if (testQuitter(tampon)) {
+            printf("Partie terminée !");
             send(fdSocket, tampon, strlen(tampon), 0);
             break; // on quitte la boucle
         }
-
+        showGridArray(tampon);
+        nextMove(tampon);
         // on envoie le message au serveur
         send(fdSocket, tampon, strlen(tampon), 0);
     }
