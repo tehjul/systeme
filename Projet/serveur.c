@@ -35,6 +35,18 @@ int testQuitter(char tampon[]) {
     return strcmp(tampon, EXIT) == 0;
 }
 
+int countPoints(char** grid){
+    int total = STARS*100;
+    for (int i = 1; i < ROWS; i++){
+        for (int j = 1; j < COLUMNS; j++){
+            if (grid[i][j] == '*' || grid[i][j] == '0'){
+                total -= 100;
+            }
+        }
+    }
+    return total;
+}
+
 char *generateArray() {
     char *tableau = (char *) malloc(COLUMNS * sizeof(char ));
     int i = 0;
@@ -70,11 +82,19 @@ void generateBlankGrid(char** grid) {
 
 void convertMatrixToArray(char** matrix, char* tableau){
     int curs = 0;
+    char temp[MAX_BUFFER];
+    sprintf(temp, "Votre score : %d", countPoints(matrix));
     for (int i = 0; i < ROWS; i++){
         for (int j = 0; j < COLUMNS; j++){
-            tableau[curs] =  matrix[i][j];
+            tableau[curs] = matrix[i][j];
             curs++;
         }
+        tableau[curs] = '|';
+        curs++;
+    }
+    for (int k = 0; k < strlen(temp); k++){
+        tableau[curs] = temp[k];
+        curs++;
     }
 }
 
@@ -82,18 +102,16 @@ void addGhosts(char** grid){
     int x, y;
     for (int i = 0; i < GHOSTS; i++) {
         do {
-            srand(time(NULL)); //initialise le générateur aléatoire
             x = 1 + rand() % COLUMNS-1;
             y = 1 + rand() % ROWS-1;
         } while (grid[y][x] != ' ');
-        grid[y][x] = '@';
+        grid[y][x] = 'O';
     }
 }
 
 void addTheGreatestPacman(char** grid){
     int x, y;
         do {
-            srand(time(NULL)); //initialise le générateur aléatoire
             x = 1 + rand() % (COLUMNS-1);
             y = 1 + rand() % (ROWS-1);
         } while (grid[y][x] != ' ');
@@ -104,7 +122,6 @@ void addDots(char** grid){
     int x, y;
     for (int i = 0; i < STARS; i++) {
     do {
-        srand(time(NULL)); //initialise le générateur aléatoire
         x = 1 + rand() % COLUMNS-1;
         y = 1 + rand() % ROWS-1;
     } while (grid[y][x] != ' ');
@@ -131,14 +148,100 @@ int getPacmanXPosition(char** grid){
 }
 
 int getPacmanYPosition(char** grid){
-    for (int i = 0; i < ROWS; i++){
-        for (int j = 0; j < COLUMNS; j++){
+    for (int i = 1; i < ROWS; i++){
+        for (int j = 1; j < COLUMNS; j++){
             if (grid[i][j] == '<'){
                 return i;
             }
         }
     }
     return 0;
+}
+
+int getGhostXPosition(char** grid, int lastx, int lasty){
+    for (int i = lasty; i < ROWS; i++){
+        for (int j = 1; j < COLUMNS; j++){
+            if ((i != lasty && j != lastx) && (grid[i][j] == 'O' || grid[i][j] == '0')){
+                return j;
+            }
+        }
+    }
+    return 0;
+}
+
+int getGhostYPosition(char** grid, int lastx, int lasty){
+    for (int i = lasty; i < ROWS; i++){
+        for (int j = 1; j < COLUMNS; j++){
+            if ((i != lasty && j != lastx) && (grid[i][j] == 'O' || grid[i][j] == '0')){
+                return i;
+            }
+        }
+    }
+    return 0;
+}
+
+void moveGhosts(char** grid){
+    int x;
+    int y;
+    int currentX = 0;
+    int currentY = 0;
+    int i = 0;
+    int movable = 0;
+    int random;
+
+    while (i < GHOSTS){
+        x = getGhostXPosition(grid, currentX, currentY);
+        y = getGhostYPosition(grid, currentX, currentY);
+        do{
+            random = 1 + rand() % 3;
+            if (random == 1 && y > 1) {
+                if (grid[y][x] == '0'){
+                    grid[y][x] = '*';
+                } else {
+                    grid[y][x] = ' ';
+                }
+                y -= 1;
+                movable = 1;
+            } else if (random == 2 && x > 1){
+                if (grid[y][x] == '0'){
+                    grid[y][x] = '*';
+                } else {
+                    grid[y][x] = ' ';
+                }
+                x -= 1;
+                movable = 1;
+            } else if (random == 3 && y < ROWS-2){
+                if (grid[y][x] == '0'){
+                    grid[y][x] = '*';
+                } else {
+                    grid[y][x] = ' ';
+                }
+                y += 1;
+                movable = 1;
+            } else if (random == 4 && x < COLUMNS-2){
+                if (grid[y][x] == '0'){
+                    grid[y][x] = '*';
+                } else {
+                    grid[y][x] = ' ';
+                }
+                x += 1;
+                movable = 1;
+            }
+        } while (!movable);
+
+        if (grid[y][x] == '<'){
+            grid[y][x] = 'X';
+        } else if (grid[y][x] == '*'){
+            grid[y][x] = '0';
+        } else if (grid[y][x] == ' '){
+            grid[y][x] = 'O';
+        }
+
+        i++;
+        movable = 0;
+        currentX = x;
+        currentY = y;
+}
 }
 
 void movePacman(char** grid, char move[]){
@@ -155,7 +258,7 @@ void movePacman(char** grid, char move[]){
         x += 1;
     }
 
-    if (grid[y][x] == '@') {
+    if (grid[y][x] == 'O' || grid[y][x] == '0') {
         grid[y][x] = 'X';
     } else {
         grid[y][x] = '<';
@@ -228,22 +331,13 @@ int main(int argc, char const *argv[]) {
                ntohs(coordonneesAppelant.sin_port));
 
         if ((pid = fork()) == 0) {
-            srand(time(NULL)); //initialise le générateur aléatoire
-            printf("dans le fork\n");
             close(fdSocketAttente);
             initGame(grid);
-            printf("grille initialisee\n");
-
-            while (!gameOver(grid)) {
+            while (1) {
+                srand(time(NULL)); //initialise le générateur aléatoire
                 convertMatrixToArray(grid, tampon);
-                printf("grille convertie\n");
                 send(fdSocketCommunication, tampon, strlen(tampon), 0);
-                printf("grille envoyee\n");
-                // on attend le messag&e du client
-                // la fonction recv est bloquante
-                printf("on attend la reponse\n");
                 nbRecu = recv(fdSocketCommunication, tampon, MAX_BUFFER, 0);
-                printf("nbrecu = %d\n", nbRecu);
 
                 if (nbRecu > 0) {
                     tampon[nbRecu] = 0;
@@ -258,26 +352,27 @@ int main(int argc, char const *argv[]) {
                                ntohs(coordonneesAppelant.sin_port));
                         break; // on quitte la boucle
                     }
-                    printf("fin de la boucle nbrecu\n");
                 }
-                printf("avant le if testquitter\n");
                 if (testQuitter(tampon)) {
-                    printf("on est dans le if testquitter seul\n");
                     send(fdSocketCommunication, tampon, strlen(tampon), 0);
                     break; // on quitte la boucle
                 }
-                printf("la pos du pacman est x = %d et y = %d\n", getPacmanXPosition(grid), getPacmanYPosition(grid));
-                printf("on bouge le pac\n");
                 movePacman(grid, tampon);
-                printf("pacman bouge\n");
-                printf("la pos du pacman est x = %d et y = %d\n", getPacmanXPosition(grid), getPacmanYPosition(grid));
-                printf("fin de la boucle\n");
+                if (gameOver(grid)){
+                    convertMatrixToArray(grid, tampon);
+                    send(fdSocketCommunication, tampon, strlen(tampon), 0);
+                    break;
+                }
+
+                moveGhosts(grid);
+                if (gameOver(grid)){
+                    convertMatrixToArray(grid, tampon);
+                    send(fdSocketCommunication, tampon, strlen(tampon), 0);
+                    break;
+                }
             }
-            convertMatrixToArray(grid, tampon);
-            send(fdSocketCommunication, tampon, strlen(tampon), 0);
             exit(EXIT_SUCCESS);
         }
-        printf("après le pid\n");
         nbClients++;
     }
 

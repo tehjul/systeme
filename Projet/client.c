@@ -26,11 +26,21 @@ int testQuitter(char tampon[]) {
 
 void showGridArray(char* grid){
     for (int i = 0; i < strlen(grid); i++){
-        if (i%COLUMNS == 0) {
+        if (grid[i] == '|') {
             printf("\n");
+        } else {
+            printf("%c", grid[i]);
         }
-        printf("%c", grid[i]);
     }
+}
+
+int gameOver(char* grid){
+    for (int i = 0; i < strlen(grid); i++){
+        if (grid[i] == 'X'){
+            return 1;
+        }
+    }
+    return 0;
 }
 
 
@@ -68,14 +78,20 @@ int main(int argc , char const *argv[]) {
 
     while (1) {
         nbRecu = recv(fdSocket, tampon, MAX_BUFFER, 0);
-        if (testQuitter(tampon)) {
-            printf("Partie terminée !");
-            send(fdSocket, tampon, strlen(tampon), 0);
+        if (gameOver(tampon)) {
+            showGridArray(tampon);
+            printf("\nVous avez perdu !");
+            send(fdSocket, "exit", strlen("exit"), 0);
             break; // on quitte la boucle
         }
         showGridArray(tampon);
         nextMove(tampon);
         // on envoie le message au serveur
+        if (testQuitter(tampon)) {
+            printf("Partie terminée !");
+            send(fdSocket, tampon, strlen(tampon), 0);
+            break; // on quitte la boucle
+        }
         send(fdSocket, tampon, strlen(tampon), 0);
     }
 
