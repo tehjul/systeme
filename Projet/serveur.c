@@ -371,6 +371,9 @@ int main(int argc, char const *argv[]) {
                     break;
                 }
             }
+            printf("Client déconnecté - %s:%d\n",
+                   inet_ntoa(coordonneesAppelant.sin_addr),
+                   ntohs(coordonneesAppelant.sin_port));
             exit(EXIT_SUCCESS);
         }
         nbClients++;

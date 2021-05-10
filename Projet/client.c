@@ -81,7 +81,8 @@ int main(int argc , char const *argv[]) {
         if (gameOver(tampon)) {
             showGridArray(tampon);
             printf("\nVous avez perdu !");
-            send(fdSocket, "exit", strlen("exit"), 0);
+            sprintf(tampon, "exit");
+            send(fdSocket, tampon, strlen(tampon), 0);
             break; // on quitte la boucle
         }
         showGridArray(tampon);
